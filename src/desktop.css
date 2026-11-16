@@ -1,0 +1,78 @@
+.verify-page {
+  max-width: 720px;
+}
+
+.verify-page > .brand {
+  margin-bottom: 36px;
+}
+
+.verify-form {
+  display: grid;
+  gap: 16px;
+}
+
+.verify-form > label,
+.demo-inbox-note > label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.verify-form input:not([type="checkbox"]),
+.demo-inbox-note input {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.verify-form input:not([type="checkbox"]):focus,
+.demo-inbox-note input:focus {
+  border-color: var(--purple);
+  outline: 3px solid rgb(101 88 232 / 12%);
+}
+
+.smtp-auth-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+}
+
+.smtp-auth-toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--purple);
+}
+
+.demo-inbox-note {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.demo-inbox-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.demo-inbox-note code,
+.verify-form code {
+  font-size: 0.94em;
+}
+
+.verify-page > .section-kicker {
+  margin-top: 20px;
+}
+
+.verify-page > .policy-intro {
+  max-width: 680px;
+}

@@ -1,0 +1,80 @@
+{
+  "name": "skillbridge",
+  "description": "SkillBridge desktop app for peer-to-peer learning and skill exchange.",
+  "private": true,
+  "version": "1.0.2",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "dev:demo": "vite --mode demo",
+    "dev:desktop": "vite --mode desktop",
+    "start:desktop": "electron .",
+    "build": "vite build",
+    "build:desktop": "npm run build:desktop:web && npm run build:desktop:backend && npm run build:desktop:runtime && npm run build:desktop:icon && electron-builder --win nsis",
+    "build:desktop:web": "vite build --mode desktop",
+    "build:desktop:backend": "mvn -f backend\\pom.xml -DskipTests package",
+    "build:desktop:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-desktop-runtime.ps1",
+    "build:desktop:icon": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-desktop-icon.ps1",
+    "build:android": "vite build && cap sync android",
+    "android": "cap open android",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/browser": "^7.0.0",
+    "@capacitor-firebase/authentication": "^7.5.0",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/status-bar": "^7.0.6",
+    "@daily-co/daily-js": "^0.95.0",
+    "firebase": "^11.10.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^41.7.1",
+    "electron-builder": "^26.0.12",
+    "vite": "^6.4.5"
+  },
+  "build": {
+    "appId": "com.skillbridge.desktop",
+    "productName": "SkillBridge",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend\\target\\skillbridge-api-runtime.jar",
+        "to": "backend\\skillbridge-api-runtime.jar"
+      },
+      {
+        "from": "build\\desktop-runtime",
+        "to": "runtime"
+      }
+    ],
+    "win": {
+      "icon": "build\\skillbridge.ico",
+      "target": "nsis",
+      "artifactName": "SkillBridge-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "include": "scripts\\installer.nsh",
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

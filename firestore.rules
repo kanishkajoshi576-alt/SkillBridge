@@ -1,0 +1,326 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profileExists(uid) {
+      return exists(/databases/$(database)/documents/profiles/$(uid));
+    }
+
+    function userBlocked(uid, otherUid) {
+      return exists(/databases/$(database)/documents/users/$(uid)/blockedUsers/$(otherUid));
+    }
+
+    function eitherUserBlocked(uid, otherUid) {
+      return userBlocked(uid, otherUid) || userBlocked(otherUid, uid);
+    }
+
+    function readReceiptsEnabled() {
+      return !exists(/databases/$(database)/documents/userSettings/$(request.auth.uid))
+        || get(/databases/$(database)/documents/userSettings/$(request.auth.uid))
+          .data.readReceiptsEnabled == true;
+    }
+
+    function conversationParticipant(conversationId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/conversations/$(conversationId))
+          .data.participants.hasAny([request.auth.uid]);
+    }
+
+    match /profiles/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'uid', 'name', 'college', 'bio', 'teachingSkills', 'learningSkills', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.college is string
+        && request.resource.data.college.size() <= 120
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.teachingSkills is list
+        && request.resource.data.teachingSkills.size() <= 20
+        && request.resource.data.learningSkills is list
+        && request.resource.data.learningSkills.size() <= 20
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'college', 'bio', 'teachingSkills', 'learningSkills', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.college is string
+        && request.resource.data.college.size() <= 120
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() <= 500
+        && request.resource.data.teachingSkills is list
+        && request.resource.data.teachingSkills.size() <= 20
+        && request.resource.data.learningSkills is list
+        && request.resource.data.learningSkills.size() <= 20
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+
+      match /learningGoals/{goalId} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly([
+            'skillName', 'currentTopic', 'progressPercentage', 'updatedAt'
+          ])
+          && request.resource.data.skillName is string
+          && request.resource.data.skillName.size() > 0
+          && request.resource.data.skillName.size() <= 100
+          && request.resource.data.currentTopic is string
+          && request.resource.data.currentTopic.size() <= 120
+          && request.resource.data.progressPercentage is int
+          && request.resource.data.progressPercentage >= 0
+          && request.resource.data.progressPercentage <= 100
+          && request.resource.data.updatedAt == request.time;
+        allow update: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'skillName', 'currentTopic', 'progressPercentage', 'updatedAt'
+          ])
+          && request.resource.data.skillName is string
+          && request.resource.data.skillName.size() > 0
+          && request.resource.data.skillName.size() <= 100
+          && request.resource.data.currentTopic is string
+          && request.resource.data.currentTopic.size() <= 120
+          && request.resource.data.progressPercentage is int
+          && request.resource.data.progressPercentage >= 0
+          && request.resource.data.progressPercentage <= 100
+          && request.resource.data.updatedAt == request.time;
+      }
+    }
+
+    match /exchangeRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['fromId', 'toId', 'message', 'status', 'createdAt'])
+        && request.resource.data.fromId == request.auth.uid
+        && request.resource.data.toId != request.auth.uid
+        && !eitherUserBlocked(request.auth.uid, request.resource.data.toId)
+        && profileExists(request.resource.data.fromId)
+        && profileExists(request.resource.data.toId)
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && resource.data.toId == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.fromId == resource.data.fromId
+        && request.resource.data.toId == resource.data.toId
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in ['accepted', 'rejected']
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if signedIn() && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'requestId', 'participants', 'createdAt', 'updatedAt', 'lastMessage'
+        ])
+        && request.resource.data.requestId == conversationId
+        && request.resource.data.participants is list
+        && request.resource.data.participants.size() == 2
+        && request.resource.data.participants.hasAny([request.auth.uid])
+        && getAfter(/databases/$(database)/documents/exchangeRequests/$(conversationId)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/exchangeRequests/$(conversationId)).data.fromId in request.resource.data.participants
+        && getAfter(/databases/$(database)/documents/exchangeRequests/$(conversationId)).data.toId in request.resource.data.participants
+        && !eitherUserBlocked(
+          getAfter(/databases/$(database)/documents/exchangeRequests/$(conversationId)).data.fromId,
+          getAfter(/databases/$(database)/documents/exchangeRequests/$(conversationId)).data.toId
+        )
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastMessage == '';
+      allow update: if signedIn()
+        && resource.data.participants.hasAny([request.auth.uid])
+        && !eitherUserBlocked(
+          request.auth.uid,
+          resource.data.participants[0] == request.auth.uid
+            ? resource.data.participants[1]
+            : resource.data.participants[0]
+        )
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'updatedAt', 'lastMessage', 'lastMessageFrom'
+        ])
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastMessage is string
+        && request.resource.data.lastMessage.size() <= 160
+        && request.resource.data.lastMessageFrom == request.auth.uid;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if conversationParticipant(conversationId);
+        allow create: if conversationParticipant(conversationId)
+          && !eitherUserBlocked(
+            request.auth.uid,
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants[0]
+              == request.auth.uid
+              ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants[1]
+              : get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants[0]
+          )
+          && request.resource.data.keys().hasOnly(['fromId', 'text', 'createdAt'])
+          && request.resource.data.fromId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.createdAt == request.time;
+        allow update: if conversationParticipant(conversationId)
+          && readReceiptsEnabled()
+          && resource.data.fromId != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'readAt'])
+          && request.resource.data.fromId == resource.data.fromId
+          && request.resource.data.text == resource.data.text
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.readBy == [request.auth.uid]
+          && request.resource.data.readAt == request.time;
+        allow delete: if false;
+      }
+    }
+
+    match /userSettings/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['readReceiptsEnabled', 'updatedAt'])
+        && request.resource.data.readReceiptsEnabled is bool
+        && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['readReceiptsEnabled', 'updatedAt'])
+        && request.resource.data.readReceiptsEnabled is bool
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /users/{uid}/blockedUsers/{blockedUid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && blockedUid != uid
+        && request.resource.data.keys().hasOnly(['blockedUid', 'createdAt'])
+        && request.resource.data.blockedUid == blockedUid
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/archivedConversations/{conversationId} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && conversationParticipant(conversationId)
+        && request.resource.data.keys().hasOnly(['conversationId', 'createdAt'])
+        && request.resource.data.conversationId == conversationId
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /teachingVerificationRequests/{requestId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'uid', 'skill', 'qualifications', 'evidenceLink', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.skill is string
+        && request.resource.data.skill.size() > 0
+        && request.resource.data.skill.size() <= 100
+        && request.resource.data.qualifications is string
+        && request.resource.data.qualifications.size() > 0
+        && request.resource.data.qualifications.size() <= 2000
+        && request.resource.data.evidenceLink is string
+        && request.resource.data.evidenceLink.size() <= 2048
+        && (
+          request.resource.data.evidenceLink == ''
+          || request.resource.data.evidenceLink.matches('https://.*')
+        )
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if signedIn() && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'conversationId', 'participants', 'createdBy', 'title', 'skillName',
+          'date', 'startTime', 'endTime', 'timeZone', 'status', 'createdAt'
+        ])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.participants is list
+        && request.resource.data.participants.size() == 2
+        && request.resource.data.participants.hasAny([request.auth.uid])
+        && conversationParticipant(request.resource.data.conversationId)
+        && request.resource.data.participants
+          == get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId))
+            .data.participants
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.skillName is string
+        && request.resource.data.skillName.size() > 0
+        && request.resource.data.skillName.size() <= 100
+        && request.resource.data.date is string
+        && request.resource.data.startTime is string
+        && request.resource.data.endTime is string
+        && request.resource.data.timeZone is string
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && resource.data.participants.hasAny([request.auth.uid])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && (
+          (
+            resource.data.status == 'pending'
+            && request.resource.data.status in ['accepted', 'rejected']
+            && request.auth.uid != resource.data.createdBy
+          )
+          || (
+            resource.data.status in ['pending', 'accepted']
+            && request.resource.data.status == 'cancelled'
+            && request.auth.uid == resource.data.createdBy
+          )
+          || (
+            resource.data.status == 'accepted'
+            && request.resource.data.status == 'completed'
+          )
+        )
+        || (
+          signedIn()
+          && resource.data.participants.hasAny([request.auth.uid])
+          && resource.data.status == 'accepted'
+          && !eitherUserBlocked(resource.data.participants[0], resource.data.participants[1])
+          && !('callRoom' in resource.data.keys())
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['callRoom', 'callUpdatedAt'])
+          && request.resource.data.callRoom is string
+          && request.resource.data.callRoom.matches('skillbridge-[a-f0-9]{32}')
+          && request.resource.data.callUpdatedAt == request.time
+        );
+      allow delete: if false;
+    }
+  }
+}

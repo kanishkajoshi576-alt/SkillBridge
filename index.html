@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f8fc" />
+    <meta name="description" content="Learn together. Teach what you know. SkillBridge connects learners through free skill exchange." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="SkillBridge" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>SkillBridge — Learn better, together</title>
+    <style>
+      #boot-fallback {
+        position: fixed;
+        z-index: 20000;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(ellipse at 50% 40%, #eeedff 0, transparent 48%), #f7f8fc;
+        color: #282940;
+        font-family: "DM Sans", sans-serif;
+        text-align: center;
+      }
+
+      html.app-mounted #boot-fallback {
+        display: none;
+      }
+
+      .boot-fallback-card {
+        display: grid;
+        justify-items: center;
+        gap: 12px;
+      }
+
+      .boot-fallback-mark {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        border-radius: 20px;
+        background: linear-gradient(145deg, #8274f3, #5547cc);
+        box-shadow: 0 12px 28px #685ce729;
+        color: #fff;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .boot-fallback-card > strong {
+        font: 800 22px/1.2 "Manrope", sans-serif;
+        letter-spacing: -1px;
+      }
+
+      .boot-fallback-card > strong > span {
+        color: #6656df;
+      }
+
+      .boot-fallback-card > p,
+      #boot-recovery > p {
+        margin: 0;
+        color: #767b92;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .boot-fallback-loader {
+        width: 20px;
+        height: 20px;
+        margin-top: 8px;
+        border: 2px solid #dcd9f7;
+        border-top-color: #6656df;
+        border-radius: 50%;
+        animation: boot-fallback-spin .7s linear infinite;
+      }
+
+      #boot-recovery {
+        display: none;
+        justify-items: center;
+        gap: 14px;
+        max-width: 310px;
+        margin-top: 8px;
+      }
+
+      #boot-fallback[data-stalled="true"] .boot-fallback-loader,
+      #boot-fallback[data-stalled="true"] > .boot-fallback-card > p {
+        display: none;
+      }
+
+      #boot-fallback[data-stalled="true"] #boot-recovery {
+        display: grid;
+      }
+
+      #boot-retry {
+        min-height: 44px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #7969ef, #5b4bd2);
+        box-shadow: 0 7px 18px #5b4bd233;
+        color: #fff;
+        font: 700 13px "DM Sans", sans-serif;
+      }
+
+      @keyframes boot-fallback-spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .boot-fallback-loader { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="boot-fallback" role="status" aria-live="polite">
+      <div class="boot-fallback-card">
+        <span class="boot-fallback-mark" aria-hidden="true">S</span>
+        <strong>skillbridge<span>.</span></strong>
+        <p>Opening your learning space…</p>
+        <span class="boot-fallback-loader" aria-hidden="true"></span>
+        <div id="boot-recovery">
+          <p>SkillBridge is taking longer than expected to open. Check your connection, then try again.</p>
+          <button id="boot-retry" type="button">Try again</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.setTimeout(function () {
+        var fallback = document.getElementById('boot-fallback');
+        if (fallback && !document.documentElement.classList.contains('app-mounted')) {
+          fallback.dataset.stalled = 'true';
+        }
+      }, 12000);
+      document.getElementById('boot-retry').addEventListener('click', function () {
+        window.location.reload();
+      });
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

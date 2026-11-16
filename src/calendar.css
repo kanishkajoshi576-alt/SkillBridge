@@ -1,0 +1,218 @@
+.calendar-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.calendar-heading h2 {
+  margin: 0;
+  min-width: 13rem;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.calendar-weekday {
+  color: var(--muted);
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.calendar-day,
+.calendar-empty {
+  min-height: 5.25rem;
+}
+
+.calendar-day {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: var(--ink);
+  cursor: pointer;
+  min-width: 0;
+  padding: 0.5rem;
+  text-align: left;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.calendar-day:hover {
+  border-color: var(--purple);
+  transform: translateY(-1px);
+}
+
+.calendar-day:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--purple) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.calendar-day-selected {
+  background: #f4f2ff;
+  border: 2px solid var(--purple);
+}
+
+.calendar-day-number {
+  font-weight: 700;
+}
+
+.calendar-day-count {
+  color: var(--purple-dark);
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.calendar-agenda {
+  margin-top: 1.5rem;
+}
+
+.learning-path-section {
+  margin: 1.25rem 0;
+}
+
+.stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+}
+
+.dashboard-skill-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  margin-top: 1.25rem;
+}
+
+.dashboard-skill-card {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.dashboard-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.dashboard-skill-tag {
+  background: #efedff;
+  border: 1px solid #e3dfff;
+  border-radius: 999px;
+  color: var(--purple-dark);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+}
+
+.dashboard-skill-tag.learning {
+  background: #eaf8f3;
+  border-color: #d3eee3;
+  color: #26785b;
+}
+
+.dashboard-skill-empty {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.learning-path-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+}
+
+.learning-path-card {
+  align-items: center;
+  background: #fbfbfe;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  display: flex;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.learning-path-icon {
+  align-items: center;
+  background: #efedff;
+  border-radius: 0.8rem;
+  color: var(--purple-dark);
+  display: flex;
+  flex: 0 0 2.7rem;
+  height: 2.7rem;
+  justify-content: center;
+}
+
+.learning-path-copy {
+  display: grid;
+  flex: 1;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.learning-path-copy strong,
+.learning-path-copy small {
+  overflow-wrap: anywhere;
+}
+
+.learning-path-copy small {
+  color: var(--muted);
+}
+
+.learning-path-copy .progress-track {
+  margin-top: 0.25rem;
+}
+
+.auth-forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+
+.auth-forgot a {
+  color: var(--purple-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-forgot a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 540px) {
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+
+  .calendar-day,
+  .calendar-empty {
+    min-height: 3.6rem;
+  }
+
+  .calendar-day {
+    padding: 0.3rem;
+  }
+
+  .calendar-day-count {
+    font-size: 0.62rem;
+    line-height: 1.2;
+  }
+
+  .learning-path-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .learning-path-copy {
+    min-width: calc(100% - 3.6rem);
+  }
+
+  .learning-path-card .button {
+    margin-left: auto;
+  }
+}
